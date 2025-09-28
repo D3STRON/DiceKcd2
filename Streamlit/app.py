@@ -1,11 +1,12 @@
 import streamlit as st
 from collections import defaultdict
-from itertools import chain, combinations
 import numpy as np
 import os
 import random
-import pandas as pd
 import pickle
+import cv2
+from ultralytics import YOLO
+import time
 
 def calculate_score(game_state):
     game_state = np.array(game_state, dtype=int)
@@ -44,19 +45,20 @@ def calculate_score(game_state):
         max_score = max(max_score, score)
     return max_score
 
+model_loc = model_name = "../models/cls.pt"
 
 if "selections" not in st.session_state:
-    st.session_state.selections = defaultdict(int)
+    st.session_state.selections = []
 if "rolls" not in st.session_state:
     st.session_state.rolls = []
 if "current_score" not in st.session_state:
     st.session_state.current_score = 0
-if "dices" not in st.session_state:
-    st.session_state.dices = 6
+if "model" not in st.session_state:
+    st.session_state.model = YOLO(model_name)
+
+
 
 st.title("Dice!")
-
-
 st.text_input("Game name", key = "game_name", value = "temp")
 st.selectbox("Player Number", ["One", "Two"], key = "player_num")
 st.session_state_opponent_num = ["One", "Two"].remove(st.session_state.player_num)
@@ -70,79 +72,56 @@ else:
     }
 
 st.header(f"Your Score: {st.session_state.scores[st.session_state.player_num]}")
-# st.header()
-# Roll button
-if st.button("Roll"):
-    st.session_state.rolls = [random.choice([1,2,3,4,5,6]) for _ in range(6)]
-st.write("🎲 Rolled:", st.session_state.rolls)
 
-
-enable = st.checkbox("Enable camera")
-picture = st.camera_input("Take a picture", disabled=not enable)
-
-if picture:
-    st.image(picture)
+st.checkbox("Enable Capture", key = "start_capture")
+cap = cv2.VideoCapture(1)  # Capture the video
+if not cap.isOpened():
+    st.error("Could not open webcam or video source.")
 
 rolled, selected = st.columns([1, 1])
-
 with rolled:
-    col1, col2 = st.columns(2)
+    frame_placeholder = st.empty()
+    while cap.isOpened() and st.session_state.start_capture:    
+        success, frame = cap.read()
+        if not success:
+            st.warning("Failed to read frame from webcam. Please verify the webcam is connected properly.")
+            break
 
-    def render_section(num, label):
-        st.header(label)
-        for i, val in enumerate(st.session_state.rolls):
-            if val == num:
-                key = f"{num}_{i}"
-                checked = st.checkbox(f"{val}", key=f"chk_{key}")
+        results = st.session_state.model.track(
+            frame, conf=0.4, iou=0.5, persist=True
+        )
 
+        st.session_state.selections =  results[0].boxes.cls.cpu().numpy().astype(int)
+        annotated_frame = results[0].plot()  # Add annotations on frame
 
+        frame_placeholder.image(annotated_frame, channels="BGR", caption="Predicted Frame")  # Display processed
+        time.sleep(0.5)
 
-
-    # Left column (odds)
-    with col1:
-        render_section(1, "Ones")
-        render_section(3, "Threes")
-        render_section(5, "Fives")
-
-    # Right column (evens)
-    with col2:
-        render_section(2, "Twos")
-        render_section(4, "Fours")
-        render_section(6, "Sixes")
-
-st.session_state.selections = defaultdict(int)
-for key in st.session_state:
-    if key.startswith("chk_") and st.session_state[key]:
-        value = key.split("_")[1]
-        st.session_state.selections[int(value)] += 1
-
+    cap.release() 
+    cv2.destroyAllWindows()
     
 with selected:
-    st.header("Counts")
-    st.write(st.session_state.selections)
     
-    max_score = calculate_score(game_state = np.array([ st.session_state.selections[face] for face in range(1,7)]))
-    st.write(max_score)
+    if len(st.session_state.selections) > 0:
+        st.header("Dice Counts")
+        st.write(st.session_state.selections + 1) 
+    dist = [0, 0, 0, 0, 0, 0]
+    for val in st.session_state.selections:
+        dist[val] += 1
+    max_score = calculate_score(game_state = dist)
+    st.header("Selected: " + str(max_score))
     
-if st.button("Roll Again") and max_score > 0:
+if st.button("Next Roll") and max_score > 0:
     st.session_state.current_score += max_score
-    st.session_state.dices -= sum(st.session_state.selections.values())
-    st.session_state.rolls = [random.choice([1,2,3,4,5,6]) for _ in range(st.session_state.dices)]
-    for key in st.session_state:
-        if key.startswith("chk_"):
-            del st.session_state[key]
-    
-    st.session_state.selections = defaultdict(int)
+    st.session_state.selections = []
     st.rerun()
 # st.write(st.session_state)
-st.header(f"You Current Socre is: {st.session_state.current_score}")
+st.header(f"Your Turn Socre is: {st.session_state.current_score}")
 
 if st.button("Pass"):
     with open(f'./games/{st.session_state.game_name}.pkl', 'wb') as file:
         st.session_state.scores[st.session_state.player_num] += st.session_state.current_score
         pickle.dump(st.session_state.scores, file, protocol=pickle.HIGHEST_PROTOCOL)
-        st.session_state.dices = 6
-        st.session_state.rolls = []
-        st.session_state.selections = defaultdict(int)
+        st.session_state.selections = []
         st.session_state.current_score = 0
     st.rerun()
