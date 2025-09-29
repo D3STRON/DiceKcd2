@@ -73,6 +73,25 @@ st.markdown(
         background: rgba(210,180,140,0.8);
         box-shadow: 0 0 25px rgba(0,0,0,0.6);
     }
+
+    div.stButton > button:first-child {
+        font-family: 'UnifrakturCook', cursive !important;
+        font-size: 28px !important;
+        font-weight: bold !important;
+        color: #FFD700 !important; /* Gold text */
+        text-shadow: 2px 2px 4px #000000; /* Depth */
+        background: linear-gradient(145deg, #5a3e1b, #3b2a15); /* Medieval wood/bronze feel */
+        border: 4px solid #FFD700;
+        border-radius: 12px;
+        padding: 12px 40px;
+        box-shadow: 0px 0px 15px rgba(0,0,0,0.7);
+        transition: all 0.2s ease-in-out;
+    }
+    div.stButton > button:first-child:hover {
+        background: linear-gradient(145deg, #3b2a15, #5a3e1b);
+        transform: scale(1.05);
+        box-shadow: 0px 0px 25px rgba(255,215,0,0.8);
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -111,7 +130,7 @@ with game:
 
     game.header(f"Your Score: {st.session_state.scores[st.session_state.player_num]}")
 
-    game.checkbox("Enable Capture", key = "start_capture")
+    game.checkbox("Enable Capture", key="start_capture")
     cap = cv2.VideoCapture(1)  # Capture the video
     if not cap.isOpened():
         game.error("Could not open webcam or video source.")
@@ -155,7 +174,7 @@ with game:
         st.rerun()
     # st.write(st.session_state)
     game.header(f"Your Turn Socre is: {st.session_state.current_score}")
-    if game.button("Pass"):
+    if st.button("⚔️ Pass"):
         with open(f'./games/{st.session_state.game_name}.pkl', 'wb') as file:
             st.session_state.scores[st.session_state.player_num] += st.session_state.current_score
             pickle.dump(st.session_state.scores, file, protocol=pickle.HIGHEST_PROTOCOL)
