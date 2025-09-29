@@ -118,7 +118,7 @@ with rules:
 with game:
     game.text_input("Game name", key = "game_name", value = "temp")
     game.selectbox("Player Number", ["One", "Two"], key = "player_num")
-    st.session_state_opponent_num = ["One", "Two"].remove(st.session_state.player_num)
+    st.session_state.opponent_num = [p for p in ["One", "Two"] if p != st.session_state.player_num][0]
     if f'{st.session_state.game_name}.pkl' in os.listdir("./games/"):
         with open(f'./games/{st.session_state.game_name}.pkl', 'rb') as file:
             st.session_state.scores = pickle.load(file)
@@ -128,7 +128,14 @@ with game:
             "Two": 0
         }
 
-    game.header(f"Your Score: {st.session_state.scores[st.session_state.player_num]}")
+    col1, col2 = game.columns(2)
+
+    with col1:
+        col1.header(f"Your Score: {st.session_state.scores[st.session_state.player_num]}")
+
+    with col2:
+        col2.header(f"Opponent Score: {st.session_state.scores[st.session_state.opponent_num]}")
+
 
     game.checkbox("Enable Capture", key="start_capture")
     cap = cv2.VideoCapture(1)  # Capture the video
