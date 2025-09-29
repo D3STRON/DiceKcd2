@@ -10,23 +10,26 @@ import time
 
 def calculate_score(game_state):
     game_state = np.array(game_state, dtype=int)
-    max_score = 0
+    max_score = -1
     
     if np.all(game_state > 0):
         new_state = game_state - 1
-        score = 1500 + calculate_score(tuple(new_state))
+        score_sub_tree = calculate_score(tuple(new_state))
+        score = (1500 + score_sub_tree) if score_sub_tree > -1 else 0
         max_score = max(max_score, score)
 
     if np.all(game_state[1:] > 0):
         new_state = game_state.copy()
         new_state[1:] -= 1
-        score = 750 + calculate_score(tuple(new_state))
+        score_sub_tree = calculate_score(tuple(new_state))
+        score = (750 + score_sub_tree) if score_sub_tree > -1 else 0
         max_score = max(max_score, score)
 
     if np.all(game_state[:-1] > 0):
         new_state = game_state.copy()
         new_state[:-1] -= 1
-        score = 500 + calculate_score(tuple(new_state))
+        score_sub_tree = calculate_score(tuple(new_state))
+        score = (500 + score_sub_tree) if score_sub_tree > -1 else 0
         max_score = max(max_score, score)
 
     score = 0
@@ -116,8 +119,13 @@ with rules:
     rules.image("./images/rules.jpg")
 
 with game:
+
     game.text_input("Game name", key = "game_name", value = "temp")
-    game.selectbox("Player Number", ["One", "Two"], key = "player_num")
+    player, game_type = game.columns(2)
+    with player:
+        player.selectbox("Player Number", ["One", "Two"], key = "player_num")
+    with game_type:
+        game_type.number_input("Score Target", key = "score_target")
     st.session_state.opponent_num = [p for p in ["One", "Two"] if p != st.session_state.player_num][0]
     if f'{st.session_state.game_name}.pkl' in os.listdir("./games/"):
         with open(f'./games/{st.session_state.game_name}.pkl', 'rb') as file:
@@ -131,10 +139,18 @@ with game:
     col1, col2 = game.columns(2)
 
     with col1:
-        col1.header(f"Your Score: {st.session_state.scores[st.session_state.player_num]}")
+        this_player = st.session_state.player_num
+        win_state = ""
+        if st.session_state.scores[this_player] >= st.session_state.score_target and st.session_state.score_target > 0:
+            win_state = "(Winner)"
+        col1.header(f"Your Score: {st.session_state.scores[st.session_state.player_num]} {win_state}")
 
     with col2:
-        col2.header(f"Opponent Score: {st.session_state.scores[st.session_state.opponent_num]}")
+        this_player = st.session_state.opponent_num
+        win_state = ""
+        if st.session_state.scores[this_player] >= st.session_state.score_target and st.session_state.score_target > 0:
+            win_state = "(Winner)"
+        col2.header(f"Opponent Score: {st.session_state.scores[st.session_state.opponent_num]} {win_state}")
 
 
     game.checkbox("Enable Capture", key="start_capture")
@@ -175,16 +191,21 @@ with game:
         max_score = calculate_score(game_state = dist)
         selected.header("Selected: " + str(max_score))
         
-    if game.button("Next Roll") and max_score > 0:
-        st.session_state.current_score += max_score
-        st.session_state.selections = []
-        st.rerun()
+    
     # st.write(st.session_state)
     game.header(f"Your Turn Socre is: {st.session_state.current_score}")
-    if st.button("⚔️ Pass"):
-        with open(f'./games/{st.session_state.game_name}.pkl', 'wb') as file:
-            st.session_state.scores[st.session_state.player_num] += st.session_state.current_score
-            pickle.dump(st.session_state.scores, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+    button_pass, button_next_roll = game.columns(2)
+    with button_next_roll:
+        if button_next_roll.button("Next Roll") and max_score > 0:
+            st.session_state.current_score += max_score
             st.session_state.selections = []
-            st.session_state.current_score = 0
-        st.rerun()
+            st.rerun()
+    with button_pass:
+        if button_pass.button("⚔️ Pass"):
+            with open(f'./games/{st.session_state.game_name}.pkl', 'wb') as file:
+                st.session_state.scores[st.session_state.player_num] += st.session_state.current_score
+                pickle.dump(st.session_state.scores, file, protocol=pickle.HIGHEST_PROTOCOL)
+                st.session_state.selections = []
+                st.session_state.current_score = 0
+            st.rerun()
