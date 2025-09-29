@@ -1,0 +1,7 @@
+[theme]
+base="dark"
+primaryColor="#DAA520"          # Goldenrod (close to gold)
+backgroundColor="#3a281eff"       # Parchment
+secondaryBackgroundColor="#d2b48c"  # Tan/wood
+textColor="#413b1bff"             # Gold text
+font="serif"                    # Old-style serif font
