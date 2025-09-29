@@ -1,52 +1,15 @@
 import streamlit as st
-from collections import defaultdict
 import numpy as np
 import os
 import random
 import pickle
 import cv2
 from ultralytics import YOLO
+import torch
 import time
-
-def calculate_score(game_state):
-    game_state = np.array(game_state, dtype=int)
-    max_score = -1
-    
-    if np.all(game_state > 0):
-        new_state = game_state - 1
-        score_sub_tree = calculate_score(tuple(new_state))
-        score = (1500 + score_sub_tree) if score_sub_tree > -1 else 0
-        max_score = max(max_score, score)
-
-    if np.all(game_state[1:] > 0):
-        new_state = game_state.copy()
-        new_state[1:] -= 1
-        score_sub_tree = calculate_score(tuple(new_state))
-        score = (750 + score_sub_tree) if score_sub_tree > -1 else 0
-        max_score = max(max_score, score)
-
-    if np.all(game_state[:-1] > 0):
-        new_state = game_state.copy()
-        new_state[:-1] -= 1
-        score_sub_tree = calculate_score(tuple(new_state))
-        score = (500 + score_sub_tree) if score_sub_tree > -1 else 0
-        max_score = max(max_score, score)
-
-    score = 0
-    for i, count in enumerate(game_state):
-        if count >= 3:
-            base = 1000 if i == 0 else (i + 1) * 100
-            score += base * (1 << (count - 3)) 
-            game_state[i] = 0
-        elif i == 0:
-            score += 100 * count
-            game_state[i] = 0
-        elif i == 4:
-            score += 50 * count
-            game_state[i] = 0
-    if np.sum(game_state) == 0:
-        max_score = max(max_score, score)
-    return max_score
+import torch.nn as nn
+from helpers import filter_and_crop_objects, run_inference_and_show, calculate_score
+from simple_cnn import SimpleCNN
 
 st.markdown(
     """
@@ -111,6 +74,11 @@ if "current_score" not in st.session_state:
     st.session_state.current_score = 0
 if "model" not in st.session_state:
     st.session_state.model = YOLO(model_name)
+if "cls_model" not in st.session_state:
+    st.session_state.cls_model= SimpleCNN()
+    st.session_state.cls_model.load_state_dict(torch.load("../models/cls_model.pth", map_location=torch.device("mps")))
+    st.session_state.cls_model.eval() 
+    st.session_state.cls_model.to("mps")
 
 st.title("Dice!")
 game, rules = st.tabs(["Game","Rules"])
@@ -159,6 +127,7 @@ with game:
         game.error("Could not open webcam or video source.")
 
     rolled, selected = game.columns([1, 1])
+
     with rolled:
         frame_placeholder = st.empty()
         while cap.isOpened() and st.session_state.start_capture:    
@@ -170,8 +139,11 @@ with game:
             results = st.session_state.model.track(
                 frame, conf=0.4, iou=0.5, persist=True
             )
-
             st.session_state.selections =  results[0].boxes.cls.cpu().numpy().astype(int)
+            # if len(st.session_state.selections) > 0:
+            #     cropped_objects = filter_and_crop_objects(results[0], frame, iou_threshold=0.5)
+            #     run_inference_and_show(cropped_objects, st.session_state.cls_model, "mps")
+            
             annotated_frame = results[0].plot()  # Add annotations on frame
 
             frame_placeholder.image(annotated_frame, channels="BGR", caption="Predicted Frame")  # Display processed
@@ -179,7 +151,6 @@ with game:
 
         cap.release() 
         cv2.destroyAllWindows()
-        
     with selected:
         
         if len(st.session_state.selections) > 0:
