@@ -19,6 +19,29 @@
 ## Gameplay
 1) Start with selecting the game name this will create a new `<game_name>.pkl` file in the `./games` directory. To start a new game either delete the file or put in a new game name.
 
-![](./Streamlit/images/roll.png)
+![](./Streamlit/images/start_new_game.png)
+
+2) Select Player and a Target Score for the game.
+![](./Streamlit/images/player_and_score_set.png)
+
+3) Roll your dice and check Enable capture
+![](./Streamlit/images/start_capture.png) 
+
+4) This will open up a live object detection panel where the model will detect the rolled dice and its number live. 
+![](./Streamlit/images/capturing.png)
+
+5) Rmove the dice you dont want for score and once the remaining dice is correctly detected disable capture
+![](./Streamlit/images/select.png)
+
+6) You selected dice value and consequent score will be displayed 
+![](./Streamlit/images/end_capture.png)
+
+7) From here you can select next roll to roll again or pass to pass on to your opponent
+![](./Streamlit/images/roll_or_pass.png)
+
+    * If passed the score will be added to the selected players current turn score 
+    ![](./Streamlit/images/roll.png)
+    * On passing your score from the current Turn score + selected dice score will be passed to the selected players total socre
+    ![](./Streamlit/images/pass.png)
 
 

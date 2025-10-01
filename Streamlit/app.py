@@ -175,7 +175,7 @@ with game:
     with button_pass:
         if button_pass.button("⚔️ Pass"):
             with open(f'./games/{st.session_state.game_name}.pkl', 'wb') as file:
-                st.session_state.scores[st.session_state.player_num] += st.session_state.current_score
+                st.session_state.scores[st.session_state.player_num] += (st.session_state.current_score + max_score)
                 pickle.dump(st.session_state.scores, file, protocol=pickle.HIGHEST_PROTOCOL)
                 st.session_state.selections = []
                 st.session_state.current_score = 0
