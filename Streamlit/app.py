@@ -93,7 +93,7 @@ with game:
     with player:
         player.selectbox("Player Number", ["One", "Two"], key = "player_num")
     with game_type:
-        game_type.number_input("Score Target", key = "score_target")
+        game_type.number_input("Score Target", value = 1000, key = "score_target", step =1)
     st.session_state.opponent_num = [p for p in ["One", "Two"] if p != st.session_state.player_num][0]
     if f'{st.session_state.game_name}.pkl' in os.listdir("./games/"):
         with open(f'./games/{st.session_state.game_name}.pkl', 'rb') as file:
