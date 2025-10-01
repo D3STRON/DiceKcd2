@@ -19,6 +19,6 @@
 ## Gameplay
 1) Start with selecting the game name this will create a new `<game_name>.pkl` file in the `./games` directory. To start a new game either delete the file or put in a new game name.
 
-![alt text](./images/roll.png)
+![](./Streamlit/images/roll.png)
 
 
