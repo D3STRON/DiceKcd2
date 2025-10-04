@@ -1,5 +1,5 @@
 # Dice From Kingdom Come Deliverance 2
-
+The Game of Dice from KCD2 but this let you play that with real dice. Useses a YOLOv12 powered object detection model that can detecte the face values of your rolled dices and calculates your scores dynamically baed on your score selection. 
 ## Installation
 
 1) Clone this Repository
