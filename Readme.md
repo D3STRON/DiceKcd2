@@ -21,7 +21,7 @@
 
 ![](./Streamlit/images/start_new_game.png)
 
-2) Select Player and a Target Score for the game.
+2) Select Target Score for the game.
 ![](./Streamlit/images/player_and_score_set.png)
 
 3) Roll your dice and check Enable capture

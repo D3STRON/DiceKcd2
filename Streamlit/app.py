@@ -79,6 +79,8 @@ if "cls_model" not in st.session_state:
     st.session_state.cls_model.load_state_dict(torch.load("../models/cls_model.pth", map_location=torch.device("mps")))
     st.session_state.cls_model.eval() 
     st.session_state.cls_model.to("mps")
+if "player_num" not in st.session_state:
+    st.session_state.player_num = "One"
 
 st.title("Dice!")
 game, rules = st.tabs(["Game","Rules"])
@@ -89,11 +91,8 @@ with rules:
 with game:
 
     game.text_input("Game name", key = "game_name", value = "temp")
-    player, game_type = game.columns(2)
-    with player:
-        player.selectbox("Player Number", ["One", "Two"], key = "player_num")
-    with game_type:
-        game_type.number_input("Score Target", value = 1000, key = "score_target", step =1)
+    
+    game.number_input("Score Target", value = 1000, key = "score_target", step =1)
     st.session_state.opponent_num = [p for p in ["One", "Two"] if p != st.session_state.player_num][0]
     if f'{st.session_state.game_name}.pkl' in os.listdir("./games/"):
         with open(f'./games/{st.session_state.game_name}.pkl', 'rb') as file:
@@ -111,14 +110,14 @@ with game:
         win_state = ""
         if st.session_state.scores[this_player] >= st.session_state.score_target and st.session_state.score_target > 0:
             win_state = "(Winner)"
-        col1.header(f"Your Score: {st.session_state.scores[st.session_state.player_num]} {win_state}")
+        col1.header(f"{st.session_state.player_num} Score: {st.session_state.scores[st.session_state.player_num]} {win_state}")
 
     with col2:
         this_player = st.session_state.opponent_num
         win_state = ""
         if st.session_state.scores[this_player] >= st.session_state.score_target and st.session_state.score_target > 0:
             win_state = "(Winner)"
-        col2.header(f"Opponent Score: {st.session_state.scores[st.session_state.opponent_num]} {win_state}")
+        col2.header(f"{st.session_state.opponent_num} Score: {st.session_state.scores[st.session_state.opponent_num]} {win_state}")
 
 
     game.checkbox("Enable Capture", key="start_capture")
@@ -179,4 +178,5 @@ with game:
                 pickle.dump(st.session_state.scores, file, protocol=pickle.HIGHEST_PROTOCOL)
                 st.session_state.selections = []
                 st.session_state.current_score = 0
+                st.session_state.player_num = "One" if st.session_state.player_num == "Two" else "Two"
             st.rerun()
