@@ -1,5 +1,5 @@
 # Dice From Kingdom Come Deliverance 2
-
+The Game of Dice from KCD2 but this let you play that with real dice. Useses a YOLOv12 powered object detection model that can detecte the face values of your rolled dices and calculates your scores dynamically baed on your score selection. 
 ## Installation
 
 1) Clone this Repository
@@ -30,10 +30,10 @@
 4) This will open up a live object detection panel where the model will detect the rolled dice and its number live. 
 ![](./Streamlit/images/capturing.png)
 
-5) Rmove the dice you dont want for score and once the remaining dice is correctly detected disable capture
+5) Remove the dice you dont want for score and once the remaining dice is correctly detected disable capture
 ![](./Streamlit/images/select.png)
 
-6) You selected dice value and consequent score will be displayed 
+6) Your selected dice value and consequent score will be displayed 
 ![](./Streamlit/images/end_capture.png)
 
 7) From here you can select next roll to roll again or pass to pass on to your opponent
